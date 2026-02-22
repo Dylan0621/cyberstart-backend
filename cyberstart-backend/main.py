@@ -2,7 +2,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import json
-import google.generativeai as genai
+# import google.generativeai as genai  ← COMENTADO, era Gemini
+from openai import OpenAI
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from pydantic import BaseModel
@@ -10,11 +11,11 @@ from pydantic import BaseModel
 
 
 load_dotenv()
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+# genai.configure(api_key=os.getenv('GEMINI_API_KEY'))  ← COMENTADO
 
-model = genai.GenerativeModel(
-    'gemini-2.5-flash',
-    generation_config={'response_mime_type': 'application/json'}
+client = OpenAI(
+    api_key=os.getenv("GROQ_API_KEY"),
+    base_url="https://api.groq.com/openai/v1"
 )
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -121,9 +122,17 @@ def get_lesson(lesson_id: str):
     '''
     
     try:
-        # 2. Llamada a Gemini
-        response = model.generate_content(system_prompt)
-        raw_text = response.text.strip()
+        # 2. Llamada a Groq (mismo SDK que OpenAI)
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": "Genera el JSON estricto para esta lección."}
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.2
+        )
+        raw_text = response.choices[0].message.content.strip()
         
         # 3. Sanitización de JSON (Evitar crashes por Markdown)
         if raw_text.startswith("```json"):
