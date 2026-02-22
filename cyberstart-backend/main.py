@@ -162,10 +162,13 @@ class ProgressPayload(BaseModel):
 @app.post("/api/progress")
 def save_progress(payload: ProgressPayload):
     try:
-        response = supabase.table("user_progress").upsert({
-            "user_id": payload.user_id,
-            "lesson_id": payload.lesson_id
-        }).execute()
+        response = supabase.table("user_progress").upsert(
+    {
+        "user_id": payload.user_id,
+        "lesson_id": payload.lesson_id
+    },
+    on_conflict="user_id,lesson_id"
+    ).execute()
         return {"status": "success", "data": response.data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
