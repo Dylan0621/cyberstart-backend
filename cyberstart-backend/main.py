@@ -24,6 +24,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
 
+
 # --- CURRICULUM DB (Single Source of Truth) ---
 CURRICULUM_DB = {
     "boot_process": """
@@ -38,9 +39,14 @@ CURRICULUM_DB = {
     """
 }
 
+origins = [
+    "http://localhost:5173",
+    "https://cyberstart-frontend.pages.dev"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
